@@ -15,10 +15,14 @@ import (
 	"github.com/nellystanford/sistema-de-bilhetagem/internal/usecase/process"
 )
 
-// TODO: implement context
+const (
+	queueUrl string = "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/teste"
+)
 
 func main() {
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-1"))
+	ctx := context.Background()
+
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion("us-east-1"))
 	if err != nil {
 		log.Fatalf("unable to load SDK config: %v", err)
 	}
@@ -27,17 +31,14 @@ func main() {
 	cfg.BaseEndpoint = aws.String("http://localhost:4566")
 	sqsClient := sqs.NewFromConfig(cfg)
 
-	// point to local dynamidb
+	// point to local dynamodb
 	cfg.BaseEndpoint = aws.String("http://localhost:8000")
 	dbClient := dynamodb.NewFromConfig(cfg)
 
-	// TODO: get queue url from env variable
-	queueURL := "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/teste"
-
-	receiveMessages(sqsClient, queueURL, dbClient)
+	receiveMessages(ctx, sqsClient, queueUrl, dbClient)
 }
 
-func receiveMessages(client *sqs.Client, queueURL string, dbClient *dynamodb.Client) {
+func receiveMessages(ctx context.Context, client *sqs.Client, queueURL string, dbClient *dynamodb.Client) {
 	for {
 		msgInput := &sqs.ReceiveMessageInput{
 			QueueUrl:            aws.String(queueURL),
@@ -49,7 +50,7 @@ func receiveMessages(client *sqs.Client, queueURL string, dbClient *dynamodb.Cli
 			},
 		}
 
-		resp, err := client.ReceiveMessage(context.TODO(), msgInput)
+		resp, err := client.ReceiveMessage(ctx, msgInput)
 		if err != nil {
 			log.Printf("error while reading message: %v", err)
 			continue
@@ -79,15 +80,13 @@ func receiveMessages(client *sqs.Client, queueURL string, dbClient *dynamodb.Cli
 				continue
 			}
 
-			// TODO: should be inside of ProcessMessage
-			err = db.InsertItem(dbClient, result)
+			err = db.InsertItem(ctx, dbClient, result)
 			if err != nil {
 				log.Printf("error publishing results: %v", err)
-				//TODO: add retry system or save information (save info on logs, ex trigger datadog)
 				continue
 			}
 
-			deleteMessage(client, queueURL, msg.ReceiptHandle)
+			deleteMessage(ctx, client, queueURL, msg.ReceiptHandle)
 		}
 	}
 }
@@ -100,8 +99,8 @@ func parseMessageBody(body string) (*contract.ConsumptionMessage, error) {
 	return &msg, nil
 }
 
-func deleteMessage(client *sqs.Client, queueURL string, receiptHandle *string) {
-	_, err := client.DeleteMessage(context.TODO(), &sqs.DeleteMessageInput{
+func deleteMessage(ctx context.Context, client *sqs.Client, queueURL string, receiptHandle *string) {
+	_, err := client.DeleteMessage(ctx, &sqs.DeleteMessageInput{
 		QueueUrl:      aws.String(queueURL),
 		ReceiptHandle: receiptHandle,
 	})

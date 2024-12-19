@@ -22,7 +22,7 @@ type TotalCostDBItem struct {
 	Date        time.Time `dynamodbav:"date"`
 }
 
-func InsertItem(dbClient *dynamodb.Client, input entity.TotalCost) error {
+func InsertItem(ctx context.Context, dbClient *dynamodb.Client, input entity.TotalCost) error {
 	inputItem := TotalCostDBItem{
 		ID:          uuid.New().String(),
 		Tenant:      input.Tenant,
@@ -36,7 +36,7 @@ func InsertItem(dbClient *dynamodb.Client, input entity.TotalCost) error {
 		panic(err)
 	}
 
-	_, err = dbClient.PutItem(context.TODO(), &dynamodb.PutItemInput{
+	_, err = dbClient.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName: aws.String(tableName), Item: item,
 	})
 	if err != nil {
