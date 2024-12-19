@@ -61,9 +61,21 @@ Run the following command to create an SQS queue:
 aws sqs create-queue --endpoint-url http://localhost:4566 --queue-name teste --profile localstack
 ```
 
+### Initialize Application  
+Inside the project folder, run:  
+```bash
+go run main.go
+```
+
 ### Send Message to SQS Queue  
 To send a message to the SQS queue, run:  
 ```bash
 aws sqs send-message --endpoint-url http://localhost:4566 \
   --queue-url http://localhost:4566/000000000000/teste \
   --message-body file://./message.json --profile localstack
+```
+
+To scan the table content and see the item that was added, use:  
+```bash
+aws dynamodb scan --table-name processor.totalCost --endpoint-url http://localhost:8000
+```
