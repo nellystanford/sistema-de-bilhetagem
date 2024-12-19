@@ -1,6 +1,3 @@
-## Miro Board  
-[Access the Miro board here](https://miro.com/app/board/uXjVL2kCRYI=/)
-
 ## Steps to Run Locally  
 
 ### Start Docker Service  
