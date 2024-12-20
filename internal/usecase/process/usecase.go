@@ -29,16 +29,6 @@ func ProcessMessage(input Input) (entity.TotalCost, error) {
 		return entity.TotalCost{}, fmt.Errorf("error calculating spent value difference: %w", err)
 	}
 
-	// err = db.InsertItem(entity.TotalCost{
-	// 	Tenant:      input.TenantID,
-	// 	SpentAmount: spentValue,
-	// 	Product:     input.Product,
-	// 	Date:        time.Now(),
-	// })
-	// if err != nil {
-	// 	return fmt.Errorf("error inserting item on dynamodb table: %w", err)
-	// }
-
 	return entity.TotalCost{
 		Tenant:      input.TenantID,
 		SpentAmount: spentValue,
